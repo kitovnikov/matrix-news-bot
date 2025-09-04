@@ -1,0 +1,7 @@
+.idea
+.env
+bot.db
+*.log
+build
+.DS_Store
+*.Identifier

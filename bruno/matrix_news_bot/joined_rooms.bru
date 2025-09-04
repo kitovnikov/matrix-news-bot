@@ -1,0 +1,15 @@
+meta {
+  name: joined_rooms
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{domain}}/_matrix/client/v3/joined_rooms
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
