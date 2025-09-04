@@ -34,6 +34,17 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 	}
 	globals.AccessToken = token
 
+	joinedRooms, err := ucase.JoinedRoom(cfg, ctx)
+	if err != nil {
+		return
+	}
+	for _, room := range joinedRooms {
+		err := storage.AddRoom(room)
+		if err != nil {
+			return
+		}
+	}
+
 	for {
 		time.Sleep(3 * time.Second)
 		url := fmt.Sprintf("https://%s/_matrix/client/v3/sync?access_token=%s&timeout=30000",

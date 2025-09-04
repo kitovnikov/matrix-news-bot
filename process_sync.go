@@ -16,7 +16,7 @@ func processSync(cfg *config.Config, ctx context.Context, syncResp globals.SyncR
 			fmt.Println("Ошибка при получении комнат из БД:", err)
 			return
 		}
-		//спросить, будет ли лучше если просто смотреть если ли комната такая уже или нет, true false
+
 		for _, room := range rooms {
 			if room == roomID {
 				continue

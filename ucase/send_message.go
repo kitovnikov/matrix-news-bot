@@ -30,7 +30,7 @@ func SendMessage(cfg *config.Config, ctx context.Context, roomID string, text st
 
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("Неудалось отправить запрос для отправки сообщения", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -39,7 +39,7 @@ func SendMessage(cfg *config.Config, ctx context.Context, roomID string, text st
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("Ошибка при отправке запроса: %v", err)
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -48,6 +48,7 @@ func SendMessage(cfg *config.Config, ctx context.Context, roomID string, text st
 			logging.GetLogger(ctx)
 		}
 	}(resp.Body)
+
 	fmt.Println("response Status:", resp.Status)
 
 	return nil

@@ -25,7 +25,7 @@ func main() {
 		return
 	}
 
-	err = addRSSLinkFromEnv(cfg)
+	err = addRSSLinkFromEnv(cfg, ctx)
 	if err != nil {
 		fmt.Println("Ошибка при загрузке RSS ссылок", err)
 		return

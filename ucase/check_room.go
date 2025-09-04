@@ -12,7 +12,7 @@ func CheckRoom(cfg *config.Config, ctx context.Context) error {
 
 	timeNow := time.Now().Unix()
 
-	if timeNow-globals.LastCheckRooms >= 300 {
+	if timeNow-globals.LastCheckRooms >= 86400 {
 		rooms, err := JoinedRoom(cfg, ctx)
 		if err != nil {
 			return err
@@ -33,7 +33,7 @@ func CheckRoom(cfg *config.Config, ctx context.Context) error {
 					return err
 				}
 			}
-			//спросить, добавлять ли это время чека в бд или просто в памяти приложения пусть будет
+
 			globals.LastCheckRooms = timeNow
 		}
 	}
