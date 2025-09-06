@@ -24,12 +24,20 @@ func InitDB(ctx context.Context) error {
         )
     `)
 
+	if err != nil {
+		logging.GetLogger(ctx).Fatal(err)
+	}
+
 	_, err = db.Exec(`
         CREATE TABLE IF NOT EXISTS batches (
             id INTEGER PRIMARY KEY,
             last_batch TEXT NOT NULL
         )
     `)
+
+	if err != nil {
+		logging.GetLogger(ctx).Fatal(err)
+	}
 
 	_, err = db.Exec(`
         CREATE TABLE IF NOT EXISTS rss_links (

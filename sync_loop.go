@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"matrix-news-bot/config"
 	"matrix-news-bot/dto"
 	"matrix-news-bot/globals"
+	"matrix-news-bot/logging"
 	"matrix-news-bot/storage"
 	"matrix-news-bot/ucase"
 	"net/http"
@@ -18,18 +21,21 @@ import (
 func syncLoop(cfg *config.Config, ctx context.Context) {
 	var since string
 
-	if since == "" {
-		batch, err := storage.GetLastBatch()
-		if err != nil {
-			fmt.Println("GetLastBatch err:", err)
+	batch, err := storage.GetLastBatch()
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			logging.GetLogger(ctx).Fatalln("GetLastBatch err", err)
 			return
+		} else {
+			since = ""
 		}
+	} else {
 		since = batch.LastBatch
 	}
 
 	token, err := ucase.GetToken(cfg, ctx)
 	if err != nil {
-		fmt.Println("GetToken err:", err)
+		logging.GetLogger(ctx).Fatalln("GetToken err", err)
 		return
 	}
 	globals.AccessToken = token
@@ -55,21 +61,22 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Printf("Ошибка sync: %v", err)
+			logging.GetLogger(ctx).Fatalln("Ошибка sync: %v", err)
 			time.Sleep(3 * time.Second)
-
 		}
 
 		body, _ := io.ReadAll(resp.Body)
 		err = resp.Body.Close()
 		if err != nil {
-			return
+			logging.GetLogger(ctx).Println("Ошибка close: %v", err)
+			continue
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
 			token, err := ucase.GetToken(cfg, ctx)
 			if err != nil {
-				return
+				time.Sleep(600 * time.Second)
+				continue
 			}
 			globals.AccessToken = token
 			continue
@@ -78,13 +85,12 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 		if resp.StatusCode != http.StatusOK {
 			log.Printf("Ошибка sync: %s", resp.Status)
 			time.Sleep(3 * time.Second)
-
+			continue
 		}
 
 		var syncResp globals.SyncResponse
 		if err := json.Unmarshal(body, &syncResp); err != nil {
-			log.Printf("Ошибка JSON: %v", err)
-
+			logging.GetLogger(ctx).Printf("Ошибка JSON: %v", err)
 		}
 
 		processSync(cfg, ctx, syncResp)
@@ -108,12 +114,12 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 				return
 			}
 		} else if batch.LastBatch != "" {
-			batch = dto.Batch{
+			batch = &dto.Batch{
 				ID:        batch.ID,
 				LastBatch: since,
 			}
 
-			err := storage.UpdateBatch(batch)
+			err := storage.UpdateBatch(*batch)
 			if err != nil {
 				return
 			}

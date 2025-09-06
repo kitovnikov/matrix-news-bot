@@ -47,14 +47,15 @@ func AddBatch(batch string) error {
 	return err
 }
 
-func GetLastBatch() (dto.Batch, error) {
+func GetLastBatch() (*dto.Batch, error) {
 	var batch dto.Batch
 	row := db.QueryRow(`SELECT id, last_batch FROM batches ORDER BY id DESC LIMIT 1`)
 	err := row.Scan(&batch.ID, &batch.LastBatch)
-	if errors.Is(err, sql.ErrNoRows) {
-		return dto.Batch{}, nil
+	if err != nil {
+		return nil, err
 	}
-	return batch, err
+
+	return &batch, nil
 }
 
 func UpdateBatch(batch dto.Batch) error {

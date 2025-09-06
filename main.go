@@ -27,7 +27,7 @@ func main() {
 
 	err = addRSSLinkFromEnv(cfg, ctx)
 	if err != nil {
-		fmt.Println("Ошибка при загрузке RSS ссылок", err)
+		logging.GetLogger(ctx).Fatalln("Ошибка при загрузке RSS ссылок", err)
 		return
 	}
 

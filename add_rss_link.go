@@ -2,38 +2,66 @@ package main
 
 import (
 	"context"
+	"errors"
 	"matrix-news-bot/config"
 	"matrix-news-bot/storage"
 	"strings"
 )
 
+var (
+	ErrEmptyLinks = errors.New("Empty Links")
+)
+
 func addRSSLinkFromEnv(cfg *config.Config, ctx context.Context) error {
 	links := cfg.RSSLinks
 	if links == "" {
-		return nil
+		return ErrEmptyLinks
 	}
 
-	allRssLinks, err := storage.GetRSSLinks(ctx)
+	dbLinks, err := storage.GetRSSLinks(ctx)
 	if err != nil {
 		return err
 	}
 
-	rssLinks := strings.Split(links, ",")
-	for _, link := range rssLinks {
-		cleaned := strings.TrimSpace(link)
-		if cleaned == "" {
+	configLinks := strings.Split(links, ",")
+	for _, configLink := range configLinks {
+		cleanedConfig := strings.TrimSpace(configLink)
+		if cleanedConfig == "" {
 			continue
 		}
-		for _, linkRss := range allRssLinks {
-			if linkRss != cleaned {
-				err := storage.RemoveRSSLink(linkRss)
-				if err != nil {
-					return err
-				}
+
+		existsLink := false
+
+		for _, dbLink := range dbLinks {
+			if cleanedConfig == dbLink {
+				existsLink = true
 			}
 		}
-		if err := storage.AddRSSLink(cleaned); err != nil {
+
+		if !existsLink {
+			err = storage.AddRSSLink(cleanedConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := storage.AddRSSLink(cleanedConfig); err != nil {
 			return err
+		}
+	}
+
+	for _, dbLink := range dbLinks {
+		existsDbLink := false
+		for _, configLink := range configLinks {
+			if configLink == dbLink {
+				existsDbLink = true
+			}
+		}
+		if !existsDbLink {
+			err = storage.RemoveRSSLink(dbLink)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
