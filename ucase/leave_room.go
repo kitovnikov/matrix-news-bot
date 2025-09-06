@@ -18,7 +18,6 @@ func LeaveRoom(cfg *config.Config, ctx context.Context, roomID string) error {
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return fmt.Errorf("Ошибка при создании запроса: %v", err)
-
 	}
 
 	client := &http.Client{}
@@ -34,13 +33,13 @@ func LeaveRoom(cfg *config.Config, ctx context.Context, roomID string) error {
 	}(resp.Body)
 
 	if resp.StatusCode == http.StatusOK {
-		fmt.Printf("Вышел из комнаты %s\n", roomID)
+		logging.GetLogger(ctx).Println("Вышел из комнаты %s\n", roomID)
 		err := storage.RemoveRoom(roomID)
 		if err != nil {
 			return err
 		}
 	} else {
-		fmt.Printf("Не удалось выйти из комнаты %s: %s\n", roomID, resp.Status)
+		logging.GetLogger(ctx).Println("Не удалось выйти из комнаты %s: %s\n", roomID, resp.Status)
 	}
 
 	return nil

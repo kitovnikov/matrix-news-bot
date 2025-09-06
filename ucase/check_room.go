@@ -2,7 +2,6 @@ package ucase
 
 import (
 	"context"
-	"fmt"
 	"matrix-news-bot/config"
 	"matrix-news-bot/globals"
 	"time"
@@ -18,8 +17,6 @@ func CheckRoom(cfg *config.Config, ctx context.Context) error {
 			return err
 		}
 
-		fmt.Println("Получен список комнат")
-
 		for _, roomID := range rooms {
 			members, err := CountOfMembers(cfg, ctx, roomID)
 			if err != nil {
@@ -27,7 +24,6 @@ func CheckRoom(cfg *config.Config, ctx context.Context) error {
 			}
 
 			if members <= 1 {
-				fmt.Printf("Выходим")
 				err := LeaveRoom(cfg, ctx, roomID)
 				if err != nil {
 					return err

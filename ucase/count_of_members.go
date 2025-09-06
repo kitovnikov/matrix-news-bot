@@ -22,6 +22,7 @@ func CountOfMembers(cfg *config.Config, ctx context.Context, roomID string) (cou
 	if err != nil {
 		return 0, fmt.Errorf("ошибка запроса участников: %v", err)
 	}
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -35,8 +36,6 @@ func CountOfMembers(cfg *config.Config, ctx context.Context, roomID string) (cou
 	if err := json.Unmarshal(body, &members); err != nil {
 		return 0, fmt.Errorf("ошибка разбора JSON: %v", err)
 	}
-
-	fmt.Printf("В комнате %s %d участников\n", roomID, len(members.Joined))
 
 	return len(members.Joined), nil
 }

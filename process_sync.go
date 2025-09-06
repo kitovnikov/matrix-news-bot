@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"matrix-news-bot/config"
 	"matrix-news-bot/globals"
+	"matrix-news-bot/logging"
 	"matrix-news-bot/storage"
 	"matrix-news-bot/ucase"
 )
@@ -13,7 +13,7 @@ func processSync(cfg *config.Config, ctx context.Context, syncResp globals.SyncR
 	for roomID, inviteRaw := range syncResp.Rooms.Invite {
 		rooms, err := storage.GetAllRooms(ctx)
 		if err != nil {
-			fmt.Println("Ошибка при получении комнат из БД:", err)
+			logging.GetLogger(ctx).Println("Ошибка при получении комнат из БД:", err)
 			return
 		}
 
@@ -28,17 +28,15 @@ func processSync(cfg *config.Config, ctx context.Context, syncResp globals.SyncR
 		events := inviteState["events"].([]interface{})
 		sender := events[0].(map[string]interface{})["sender"].(string)
 
-		fmt.Println("Приглашение от: ", sender, ". В комнату: ", roomID)
+		logging.GetLogger(ctx).Println("Приглашение от: ", sender, ". В комнату: ", roomID)
 		if err := ucase.JoinRoom(cfg, ctx, roomID); err == nil {
-			err := storage.AddRoom(roomID)
-			if err != nil {
-				continue
-			}
+			logging.GetLogger(ctx).Println("Ошибка при присоединении к комнате:", err)
+			continue
 		}
 
-		fmt.Println("Бот впервые вступил в комнату: ", roomID)
+		logging.GetLogger(ctx).Println("Бот впервые вступил в комнату: ", roomID)
 		if err := ucase.SendMessage(cfg, ctx, roomID, "Привет! Я новостной бот. Каждый день я буду присылать тебе свежие и важные новости."); err != nil {
-			fmt.Println("Ошибка отправки:", err)
+			logging.GetLogger(ctx).Println("Ошибка отправки сообщения:", err)
 			continue
 		}
 	}

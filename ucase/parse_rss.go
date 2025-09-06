@@ -20,7 +20,6 @@ import (
 	_ "log"
 	"matrix-news-bot/config"
 	_ "matrix-news-bot/dto"
-	_ "matrix-news-bot/logging"
 	"matrix-news-bot/storage"
 	_ "time"
 )
@@ -31,15 +30,14 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 
 	links, err := storage.GetRSSLinks(ctx)
 	if err != nil {
-		fmt.Println("Ошибка при получении RSS ссылок из БД ", err)
+		logging.GetLogger(ctx).Println("Ошибка при получении RSS ссылок из БД ", err)
 		return
 	}
 
 	for _, link := range links {
-		fmt.Println(link)
 		lastNewsTime, err := storage.GetLastNewsTime(link)
 		if err != nil {
-			fmt.Println("Ошибка получения времени ", err)
+			logging.GetLogger(ctx).Println("Ошибка получения времени ", err)
 			return
 		}
 
@@ -61,22 +59,21 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 			formatted := t.Format("2006-01-02 15:04:05")
 
 			if lastNewsTime == "" || lastNewsTime < formatted {
-				err := storage.UpdateLastNewsTime(formatted, link)
+				err = storage.UpdateLastNewsTime(formatted, link)
 				if err != nil {
-					fmt.Println("Ошибка при обновлении времени последней новости ", err)
-
+					logging.GetLogger(ctx).Println("Ошибка при обновлении времени последней новости ", err)
 					return
 				}
 				newsTime, err := storage.GetLastNewsTime(link)
 				if err != nil {
-					fmt.Println("Ошибка получения времени последней новости ", err)
+					logging.GetLogger(ctx).Println("Ошибка получения времени последней новости ", err)
 					return
 				}
 				lastNewsTime = newsTime
 
 				rooms, err := storage.GetAllRooms(ctx)
 				if err != nil {
-					fmt.Println("Ошика получении всех комнат ", err)
+					logging.GetLogger(ctx).Println("Ошика получении всех комнат ", err)
 					return
 				}
 
@@ -90,9 +87,9 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 							feed.Title, formatted, item.Title, item.Link)
 					}
 
-					err := sendFormattedMessage(cfg, ctx, roomID, text)
+					err = sendFormattedMessage(cfg, ctx, roomID, text)
 					if err != nil {
-						fmt.Println("Ошибка отправки сообщения ", err)
+						logging.GetLogger(ctx).Println("Ошибка отправки сообщения ", err)
 						return
 					}
 				}
@@ -120,7 +117,8 @@ func sendFormattedMessage(cfg *config.Config, ctx context.Context, roomID string
 
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(data))
 	if err != nil {
-		return fmt.Errorf("Неудалось отправить запрос для отправки сообщения", err)
+		logging.GetLogger(ctx).Println("Неудалось отправить запрос для отправки сообщения", err)
+		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -129,7 +127,8 @@ func sendFormattedMessage(cfg *config.Config, ctx context.Context, roomID string
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Ошибка при отправке запроса: %v", err)
+		logging.GetLogger(ctx).Println("Ошибка при отправке запроса: %v", err)
+		return err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -139,97 +138,5 @@ func sendFormattedMessage(cfg *config.Config, ctx context.Context, roomID string
 		}
 	}(resp.Body)
 
-	fmt.Println("response Status:", resp.Status)
-
 	return nil
 }
-
-//	links, err := storage.GetRSSLinks(ctx)
-//	if err != nil {
-//		fmt.Println("Ошибка при получении RSS ссылок из БД ", err)
-//		return
-//	}
-//	fmt.Println("Links:", links)
-//	fmt.Println("Начало парсинга")
-//	var link string
-//	for _, link = range links {
-//		fmt.Println(link)
-//		lastNewsTime, err := storage.GetLastNewsTime(link)
-//		if err != nil {
-//			fmt.Println("Ошибка получения времени ", err)
-//			return
-//		}
-//		fmt.Println("СТАРОЕ ВРЕСЯ", lastNewsTime)
-//		fmt.Println(link)
-//		var oldTime time.Time
-//		if lastNewsTime != "" {
-//			locMSK, _ := time.LoadLocation("Europe/Moscow")
-//			oldTime, err = time.ParseInLocation("2006-01-02 15:04:05", lastNewsTime, locMSK)
-//			if err != nil {
-//				fmt.Println("Ошибка форматирования старого времени", err)
-//				return
-//			}
-//			fmt.Println("ФОРМАТИРОВАННОЕ СТАРОЕ ВРЕМЯ", oldTime)
-//
-//		}
-//		fmt.Println("Обрабатываем ссылки: ", link)
-//
-//		url := link
-//
-//		fp := gofeed.NewParser()
-//		feed, err := fp.ParseURL(url)
-//		if err != nil {
-//			logging.GetLogger(ctx).Fatal(err)
-//		}
-//
-//		fmt.Println(feed.Title)
-//		for _, item := range feed.Items {
-//			t, err := time.Parse(time.RFC1123Z, item.Published)
-//			if err != nil {
-//				log.Fatal(err)
-//			}
-//
-//			// Преобразуем в ISO 8601 для хранения в SQLite
-//			formatted := t.Format("2006-01-02 15:04:05")
-//
-//			fmt.Println(2)
-//			fmt.Println(lastNewsTime < formatted, formatted, "LAST_NEWS_TIME: ", lastNewsTime)
-//			if lastNewsTime < formatted {
-//				time.Sleep(3 * time.Second)
-//				err = storage.UpdateLastNewsTime(formatted, link)
-//				if err != nil {
-//					fmt.Println("Ошибка при обновлении времени последней новости", err)
-//					return
-//				}
-//
-//				rooms, err := storage.GetAllRooms(ctx)
-//				if err != nil {
-//					return
-//				}
-//
-//				fmt.Printf("Канал :%s\nЗаголовок: %s\nОписание: %s\nСсылка: %s\nДата: %s",
-//					feed.Title, item.Title, item.Description, item.Link, formatted)
-//				for _, roomID := range rooms {
-//					var text string
-//					_ = roomID
-//					_ = text
-//					desc := fmt.Sprintf("Описание: %s", item.Description)
-//					if desc != "" {
-//						text = fmt.Sprintf("Канал: %s\nЗаголовок: %s\n %s\nСсылка: %s\nДата: %s",
-//							feed.Title, item.Title, desc, item.Link, formatted)
-//					} else {
-//						text = fmt.Sprintf("Канал: %s\nЗаголовок: %s\nСсылка: %s\nДата: %s",
-//							feed.Title, item.Title, item.Link, formatted)
-//					}
-//
-//					//err := SendMessage(cfg, ctx, roomID, text)
-//					//if err != nil {
-//					//	return
-//					//}
-//				}
-//				fmt.Println(5)
-//
-//			}
-//		}
-//	}
-//}

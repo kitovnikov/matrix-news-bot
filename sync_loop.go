@@ -94,23 +94,31 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 		}
 
 		processSync(cfg, ctx, syncResp)
+
 		ucase.ParseRSS(cfg, ctx)
 
 		err = ucase.CheckRoom(cfg, ctx)
 		if err != nil {
+			logging.GetLogger(ctx).Println("CheckRoom err", err)
 			return
 		}
 
 		since = syncResp.NextBatch
 
-		batch, err := storage.GetLastBatch()
+		batch, err = storage.GetLastBatch()
 		if err != nil {
-			return
+			if !errors.Is(err, sql.ErrNoRows) {
+				logging.GetLogger(ctx).Println("GetLastBatch err", err)
+				return
+			} else {
+				batch = &dto.Batch{}
+			}
 		}
 
 		if batch.LastBatch == "" {
 			err = storage.AddBatch(since)
 			if err != nil {
+				logging.GetLogger(ctx).Println("AddBatch err", err)
 				return
 			}
 		} else if batch.LastBatch != "" {
@@ -119,8 +127,9 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 				LastBatch: since,
 			}
 
-			err := storage.UpdateBatch(*batch)
+			err = storage.UpdateBatch(*batch)
 			if err != nil {
+				logging.GetLogger(ctx).Println("UpdateBatch err", err)
 				return
 			}
 		}

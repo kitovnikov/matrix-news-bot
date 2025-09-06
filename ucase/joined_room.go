@@ -18,6 +18,7 @@ func JoinedRoom(cfg *config.Config, ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Ошибка при запросе joined_rooms: %s", err)
 	}
+
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {

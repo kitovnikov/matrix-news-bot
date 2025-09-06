@@ -7,6 +7,7 @@ import (
 	"matrix-news-bot/config"
 	"matrix-news-bot/globals"
 	"matrix-news-bot/logging"
+	"matrix-news-bot/storage"
 	"net/http"
 )
 
@@ -33,9 +34,12 @@ func JoinRoom(cfg *config.Config, ctx context.Context, roomID string) error {
 	}(resp.Body)
 
 	if resp.StatusCode == http.StatusOK {
-		fmt.Printf("Принято приглашение и присоединился к комнате %s\n", roomID)
+		err := storage.AddRoom(roomID)
+		if err != nil {
+			return err
+		}
 	} else {
-		fmt.Printf("Не удалось присоединиться к комнате %s: %s\n", roomID, resp.Status)
+		logging.GetLogger(ctx).Println("Не удалось присоединиться к комнате %s: %s\n", roomID, resp.Status)
 	}
 
 	return nil

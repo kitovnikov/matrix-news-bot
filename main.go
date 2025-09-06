@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"matrix-news-bot/config"
 	"matrix-news-bot/logging"
 	"matrix-news-bot/storage"
@@ -21,7 +20,7 @@ func main() {
 
 	err := storage.InitDB(ctx)
 	if err != nil {
-		fmt.Println("Ошибка при запуске БД", err)
+		logging.GetLogger(ctx).Fatalln("Ошибка при запуске БД", err)
 		return
 	}
 

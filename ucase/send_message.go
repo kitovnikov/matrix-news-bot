@@ -49,7 +49,5 @@ func SendMessage(cfg *config.Config, ctx context.Context, roomID string, text st
 		}
 	}(resp.Body)
 
-	fmt.Println("response Status:", resp.Status)
-
 	return nil
 }
