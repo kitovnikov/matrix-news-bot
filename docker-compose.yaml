@@ -4,11 +4,8 @@ services:
       context: .
       dockerfile: _docker/app/Dockerfile
     container_name: news-bot-app
-    ports:
-      - "127.0.0.1:8076:8083"
     volumes:
       - ./logs:/app/logs
-      - ./bot.db:/app/bot.db
     env_file:
       - .env
     restart: always

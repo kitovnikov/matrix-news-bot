@@ -44,6 +44,7 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 	if err != nil {
 		return
 	}
+
 	for _, room := range joinedRooms {
 		err := storage.AddRoom(room)
 		if err != nil {

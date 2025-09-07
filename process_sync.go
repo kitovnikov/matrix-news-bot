@@ -29,7 +29,7 @@ func processSync(cfg *config.Config, ctx context.Context, syncResp globals.SyncR
 		sender := events[0].(map[string]interface{})["sender"].(string)
 
 		logging.GetLogger(ctx).Println("Приглашение от: ", sender, ". В комнату: ", roomID)
-		if err := ucase.JoinRoom(cfg, ctx, roomID); err == nil {
+		if err := ucase.JoinRoom(cfg, ctx, roomID); err != nil {
 			logging.GetLogger(ctx).Println("Ошибка при присоединении к комнате:", err)
 			continue
 		}

@@ -15,7 +15,6 @@ func main() {
 
 	logger := logging.NewLogger()
 	ctx = logging.ContextWithLogger(ctx, logger)
-
 	logging.GetLogger(ctx).Infoln("Запуск бота")
 
 	err := storage.InitDB(ctx)

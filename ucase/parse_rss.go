@@ -12,6 +12,7 @@ import (
 	"matrix-news-bot/logging"
 	_ "matrix-news-bot/logging"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -38,7 +39,7 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 		lastNewsTime, err := storage.GetLastNewsTime(link)
 		if err != nil {
 			logging.GetLogger(ctx).Println("Ошибка получения времени ", err)
-			return
+			continue
 		}
 
 		url := link
@@ -47,6 +48,20 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 		feed, err := fp.ParseURL(url)
 		if err != nil {
 			logging.GetLogger(ctx).Fatal(err)
+		}
+
+		sort.Slice(feed.Items, func(i, j int) bool {
+			ti := feed.Items[i].PublishedParsed
+			tj := feed.Items[j].PublishedParsed
+			if ti == nil || tj == nil {
+				return false
+			}
+			return ti.Before(*tj)
+		})
+
+		// Оставляем только последние 6 новостей
+		if len(feed.Items) > 6 {
+			feed.Items = feed.Items[len(feed.Items)-6:]
 		}
 
 		for _, item := range feed.Items {
@@ -80,18 +95,20 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 				for _, roomID := range rooms {
 					var text string
 					if item.Description != "" {
-						text = fmt.Sprintf("%s. %s<br><br><b>%s</b><br><br><b>%s</b><br><br>Ссылка: %s",
-							feed.Title, formatted, item.Title, item.Description, item.Link)
+						text = fmt.Sprintf("%s. %s<br><br><b>%s</b><br><br>%s<br><br><a href='%s'>Подробнее...</a>",
+							feed.Title, t.Format("02.01.2006 15:04:05"), item.Title, item.Description, item.Link)
 					} else {
-						text = fmt.Sprintf("%s. %s<br><br><b>%s</b><br><br>Ссылка: %s",
-							feed.Title, formatted, item.Title, item.Link)
+						text = fmt.Sprintf("%s. %s<br><br><b>%s</b><br><br><a href='%s'>Подробнее...</a>",
+							feed.Title, t.Format("02.01.2006 15:04:05"), item.Title, item.Link)
 					}
 
+					logging.GetLogger(ctx).Println("Отправляем сообщение в room " + roomID) // c
 					err = sendFormattedMessage(cfg, ctx, roomID, text)
 					if err != nil {
 						logging.GetLogger(ctx).Println("Ошибка отправки сообщения ", err)
-						return
+						continue
 					}
+					time.Sleep(3 * time.Second)
 				}
 
 			}

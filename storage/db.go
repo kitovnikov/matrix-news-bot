@@ -9,8 +9,15 @@ import (
 )
 
 func AddRoom(roomID string) error {
-	_, err := db.Exec(`INSERT OR IGNORE INTO rooms(room_id) VALUES (?)`, roomID)
-	return err
+	row := db.QueryRow(`SELECT room_id FROM rooms WHERE room_id=?`, roomID)
+	var foundRoomID string
+	err := row.Scan(&foundRoomID)
+	if errors.Is(err, sql.ErrNoRows) {
+		_, err := db.Exec(`INSERT OR IGNORE INTO rooms(room_id) VALUES (?)`, roomID)
+		return err
+	} else {
+		return err
+	}
 }
 
 func RemoveRoom(roomID string) error {

@@ -45,8 +45,8 @@ func setTextFormat(logger *logrus.Logger) {
 func setLumberjackOutput(logger *logrus.Logger) {
 	logger.SetOutput(&lumberjack.Logger{
 		Filename:   "./logs/app.log", // Основной файл логов
-		MaxSize:    5,                // Макс. размер файла (МБ)
-		MaxBackups: 5,                // Количество старых файлов
+		MaxSize:    3,                // Макс. размер файла (МБ)
+		MaxBackups: 3,                // Количество старых файлов
 		MaxAge:     30,               // Дни хранения
 		Compress:   true,             // Сжатие старых логов
 	})

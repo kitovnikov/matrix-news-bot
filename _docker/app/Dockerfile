@@ -8,11 +8,13 @@ RUN --mount=type=cache,target=/go/pkg \
     --mount=type=cache,target=/root/.cache/go-build \
     go mod download
 
+RUN apk add --no-cache gcc musl-dev
+
 # Копируем исходный код
 COPY . .
 
 # Собираем приложение
-RUN CGO_ENABLED=0 GOOS=linux go build -o httpApp .
+RUN CGO_ENABLED=1 GOOS=linux go build -o httpApp .
 
 
 FROM alpine:latest
