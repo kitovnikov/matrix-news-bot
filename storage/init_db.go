@@ -50,5 +50,18 @@ func InitDB(ctx context.Context) error {
 	if err != nil {
 		logging.GetLogger(ctx).Fatal(err)
 	}
+
+	_, err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS auth_tokens (
+            id INTEGER PRIMARY KEY,
+            token TEXT NOT NULL UNIQUE,
+            expired_at TEXT NOT NULL
+        )
+    `)
+
+	if err != nil {
+		logging.GetLogger(ctx).Fatal(err)
+	}
+
 	return nil
 }

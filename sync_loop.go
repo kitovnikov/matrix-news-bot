@@ -40,7 +40,7 @@ func syncLoop(cfg *config.Config, ctx context.Context) {
 	}
 	globals.AccessToken = token
 
-	joinedRooms, err := ucase.JoinedRoom(cfg, ctx)
+	joinedRooms, _ := ucase.JoinedRoom(cfg, ctx)
 	if err != nil {
 		return
 	}

@@ -45,7 +45,7 @@ func SendMessage(cfg *config.Config, ctx context.Context, roomID string, text st
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			logging.GetLogger(ctx)
+			logging.GetLogger(ctx).Println(err)
 		}
 	}(resp.Body)
 

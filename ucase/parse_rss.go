@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"github.com/mmcdole/gofeed"
 	"io"
-	"log"
 	"math/rand"
 	"matrix-news-bot/globals"
 	"matrix-news-bot/logging"
@@ -65,9 +64,10 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 		}
 
 		for _, item := range feed.Items {
-			t, err := time.Parse(time.RFC1123Z, item.Published)
+			t, err := http.ParseTime(item.Published)
 			if err != nil {
-				log.Fatal(err)
+				logging.GetLogger(ctx).Println("Ошибка парсинга времени новости", err)
+				continue
 			}
 
 			// Преобразуем в ISO 8601 для хранения в SQLite

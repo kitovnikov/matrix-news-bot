@@ -8,6 +8,39 @@ import (
 	"matrix-news-bot/logging"
 )
 
+func GetLastToken(nowDateTime string) (string, error) {
+	var token string
+	row := db.QueryRow(`SELECT token FROM auth_tokens where expired_at > ? ORDER BY id DESC LIMIT 1`, nowDateTime)
+	err := row.Scan(&token)
+	if err != nil {
+		return token, err
+	}
+
+	return token, nil
+}
+
+func UpdateToken(token string, expiredAt string) error {
+	var lastID int
+	row := db.QueryRow(`SELECT id FROM auth_tokens ORDER BY id DESC LIMIT 1`)
+	err := row.Scan(&lastID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			_, err = db.Exec(`INSERT INTO auth_tokens(token, expired_at) VALUES (?, ?)`, token, expiredAt)
+			if err != nil {
+				return err
+			}
+			return nil
+		} else {
+			return err
+		}
+	}
+	_, err = db.Exec(`UPDATE auth_tokens SET token = ?, expired_at = ? WHERE id = ?`, token, expiredAt, lastID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func AddRoom(roomID string) error {
 	row := db.QueryRow(`SELECT room_id FROM rooms WHERE room_id=?`, roomID)
 	var foundRoomID string
