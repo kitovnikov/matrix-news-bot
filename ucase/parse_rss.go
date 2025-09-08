@@ -34,6 +34,13 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 		return
 	}
 
+	timeLayouts := []string{
+		time.RFC1123Z, // "Mon, 02 Jan 2006 15:04:05 -0700"
+		time.RFC1123,  // "Mon, 02 Jan 2006 15:04:05 MST"
+		time.RFC850,   // "Monday, 02-Jan-06 15:04:05 MST"
+		time.ANSIC,    // "Mon Jan _2 15:04:05 2006"
+	}
+
 	for _, link := range links {
 		lastNewsTime, err := storage.GetLastNewsTime(link)
 		if err != nil {
@@ -64,7 +71,14 @@ func ParseRSS(cfg *config.Config, ctx context.Context) {
 		}
 
 		for _, item := range feed.Items {
-			t, err := http.ParseTime(item.Published)
+			var t time.Time
+			var err error
+			for _, layout := range timeLayouts {
+				t, err = time.Parse(layout, item.Published)
+				if err == nil {
+					break
+				}
+			}
 			if err != nil {
 				logging.GetLogger(ctx).Println("Ошибка парсинга времени новости", err)
 				continue
